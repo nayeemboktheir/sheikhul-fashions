@@ -58,7 +58,7 @@ const Header = () => {
     refetchOnWindowFocus: true,
   });
 
-  const siteName = headerSettings?.site_name || 'খেজুর বাজার';
+  const siteName = headerSettings?.site_name || 'Sheikhul Fashions';
   const siteLogo = headerSettings?.site_logo || headerSettings?.shop_logo_url || defaultLogo;
 
   useEffect(() => {
