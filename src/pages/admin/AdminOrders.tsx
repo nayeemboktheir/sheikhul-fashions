@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { syncOrderToBotBhai, deleteOrderFromBotBhai } from '@/services/botbhaiService';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -351,28 +351,6 @@ export default function AdminOrders() {
       if (order) {
         sendStatusSms(order, newStatus);
 
-        // Sync status change to BotBhai in background
-        syncOrderToBotBhai({
-          id: order.id,
-          total: Number(order.total),
-          subtotal: Number(order.subtotal),
-          shipping_cost: Number(order.shipping_cost),
-          discount: Number(order.discount) || 0,
-          status: newStatus,
-          payment_method: order.payment_method,
-          payment_status: order.payment_status,
-          notes: order.notes,
-          customer: {
-            name: order.shipping_name,
-            phone: order.shipping_phone,
-            address: [order.shipping_street, order.shipping_city, order.shipping_district].filter(Boolean).join(', '),
-          },
-          items: (order.order_items || []).map((item: any) => ({
-            product_id: item.product_id || '',
-            qty: item.quantity,
-            price: Number(item.price),
-          })),
-        }).catch(() => {});
       }
       
       loadOrders();
@@ -603,7 +581,7 @@ export default function AdminOrders() {
     setDeleting(true);
     try {
       await deleteOrder(orderToDelete.id);
-      deleteOrderFromBotBhai(orderToDelete.id).catch(() => {});
+      
       toast.success(`Order ${orderToDelete.order_number} deleted successfully`);
       setIsDeleteDialogOpen(false);
       setOrderToDelete(null);
