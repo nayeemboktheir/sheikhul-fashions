@@ -323,6 +323,8 @@ export const SectionPreview = ({ section, theme }: SectionPreviewProps) => {
       columns: number;
       gap: string;
       aspectRatio: string;
+      title?: string;
+      backgroundColor?: string;
     };
 
     const aspectClass = {
@@ -333,23 +335,28 @@ export const SectionPreview = ({ section, theme }: SectionPreviewProps) => {
     }[settings.aspectRatio] || 'aspect-square';
 
     return (
-      <section className="py-8 px-6">
-        <div
-          className="max-w-6xl mx-auto grid"
-          style={{
-            gridTemplateColumns: `repeat(${settings.columns || 3}, 1fr)`,
-            gap: settings.gap || '16px',
-          }}
-        >
-          {(settings.images || []).map((img, idx) => (
-            <div key={idx} className={aspectClass}>
-              <img
-                src={img}
-                alt=""
-                className="w-full h-full object-cover rounded-lg"
-              />
-            </div>
-          ))}
+      <section className="py-8 px-6" style={{ backgroundColor: settings.backgroundColor }}>
+        <div className="max-w-6xl mx-auto">
+          {settings.title && (
+            <h2 className="text-2xl font-bold text-center mb-6">{settings.title}</h2>
+          )}
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: `repeat(${settings.columns || 3}, 1fr)`,
+              gap: settings.gap || '16px',
+            }}
+          >
+            {(settings.images || []).map((img, idx) => (
+              <div key={idx} className={aspectClass}>
+                <img
+                  src={img}
+                  alt=""
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     );

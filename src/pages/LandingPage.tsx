@@ -825,6 +825,8 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
         columns: number;
         gap: string;
         aspectRatio: string;
+        title?: string;
+        backgroundColor?: string;
       };
 
       const aspectClass: Record<string, string> = {
@@ -837,20 +839,25 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       const columns = settings.columns || 3;
       
       return (
-        <section className="py-8 px-4">
-          <div
-            className={`max-w-6xl mx-auto grid gap-4 ${
-              columns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
-              columns === 3 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' :
-              columns === 4 ? 'grid-cols-2 md:grid-cols-4' :
-              'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
-            }`}
-          >
-            {(settings.images || []).map((img, idx) => (
-              <div key={idx} className={aspectClass[settings.aspectRatio] || "aspect-square"}>
-                <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
-              </div>
-            ))}
+        <section className="py-8 px-4" style={{ backgroundColor: settings.backgroundColor }}>
+          <div className="max-w-6xl mx-auto">
+            {settings.title && (
+              <h2 className="text-2xl font-bold text-center mb-6">{settings.title}</h2>
+            )}
+            <div
+              className={`grid gap-4 ${
+                columns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+                columns === 3 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' :
+                columns === 4 ? 'grid-cols-2 md:grid-cols-4' :
+                'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+              }`}
+            >
+              {(settings.images || []).map((img, idx) => (
+                <div key={idx} className={aspectClass[settings.aspectRatio] || "aspect-square"}>
+                  <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       );
