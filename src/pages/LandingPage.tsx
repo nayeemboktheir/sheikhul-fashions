@@ -1228,6 +1228,90 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       return <div style={{ height: settings.height }} />;
     }
 
+    case "size-chart": {
+      const settings = section.settings as {
+        title: string;
+        sizes: Array<{ size: string; chest: string; length: string; sleeve: string }>;
+        backgroundColor: string;
+        textColor: string;
+        headerColor: string;
+      };
+
+      return (
+        <section
+          className="py-12 px-4"
+          style={{ backgroundColor: settings.backgroundColor || '#ffffff', color: settings.textColor || '#1f2937' }}
+        >
+          <div className="max-w-3xl mx-auto">
+            {settings.title && (
+              <h2 className="text-2xl font-bold text-center mb-6">{settings.title}</h2>
+            )}
+            <div className="overflow-x-auto rounded-xl shadow-md border border-gray-200">
+              <table className="w-full text-center">
+                <thead>
+                  <tr style={{ backgroundColor: settings.headerColor || '#f59e0b', color: '#ffffff' }}>
+                    <th className="py-3 px-4 font-bold text-sm md:text-base">Size</th>
+                    <th className="py-3 px-4 font-bold text-sm md:text-base">Chest (Inch)</th>
+                    <th className="py-3 px-4 font-bold text-sm md:text-base">Length (Inch)</th>
+                    <th className="py-3 px-4 font-bold text-sm md:text-base">Sleeve (Inch)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(settings.sizes || []).map((row, idx) => (
+                    <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="py-3 px-4 font-bold text-sm md:text-base">{row.size}</td>
+                      <td className="py-3 px-4 text-sm md:text-base">{row.chest}</td>
+                      <td className="py-3 px-4 text-sm md:text-base">{row.length}</td>
+                      <td className="py-3 px-4 text-sm md:text-base">{row.sleeve}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    case "product-colors": {
+      const settings = section.settings as {
+        title: string;
+        colors: Array<{ name: string; hex: string; image?: string }>;
+        backgroundColor: string;
+        textColor: string;
+      };
+
+      return (
+        <section
+          className="py-12 px-4"
+          style={{ backgroundColor: settings.backgroundColor || '#ffffff', color: settings.textColor || '#1f2937' }}
+        >
+          <div className="max-w-4xl mx-auto">
+            {settings.title && (
+              <h2 className="text-2xl font-bold text-center mb-8">{settings.title}</h2>
+            )}
+            <div className="flex flex-wrap justify-center gap-6">
+              {(settings.colors || []).map((c, idx) => (
+                <div key={idx} className="text-center">
+                  {c.image ? (
+                    <div className="w-28 h-36 md:w-32 md:h-40 rounded-xl overflow-hidden shadow-md mb-3 border border-gray-200">
+                      <img src={c.image} alt={c.name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div
+                      className="w-28 h-36 md:w-32 md:h-40 rounded-xl shadow-md mb-3 border-2 border-gray-200"
+                      style={{ backgroundColor: c.hex }}
+                    />
+                  )}
+                  <span className="font-medium text-sm md:text-base">{c.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
     case "hero-gradient": {
       const settings = section.settings as {
         badge: string;
