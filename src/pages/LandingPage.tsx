@@ -1,11 +1,12 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
 import {
   Accordion,
   AccordionContent,
@@ -43,6 +44,72 @@ const DEFAULT_THEME: ThemeSettings = {
   fontFamily: "Inter",
   borderRadius: "8px",
   buttonStyle: "filled",
+};
+// Auto-sliding image gallery carousel
+const ImageGallerySlider = ({ images, aspectRatio }: { images: string[]; aspectRatio?: string }) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start", slidesToScroll: 1 });
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+
+    // Auto-scroll every 3 seconds
+    const interval = setInterval(() => {
+      if (emblaApi.canScrollNext()) {
+        emblaApi.scrollNext();
+      } else {
+        emblaApi.scrollTo(0);
+      }
+    }, 3000);
+
+    return () => {
+      clearInterval(interval);
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  const aspectClass = aspectRatio === 'portrait' ? 'aspect-[3/4]' : aspectRatio === 'landscape' ? 'aspect-video' : aspectRatio === 'auto' ? '' : 'aspect-square';
+
+  return (
+    <div className="relative">
+      <div ref={emblaRef} className="overflow-hidden rounded-lg">
+        <div className="flex gap-3">
+          {images.map((img, idx) => (
+            <div key={idx} className="flex-[0_0_80%] sm:flex-[0_0_45%] md:flex-[0_0_32%] min-w-0">
+              <div className={aspectClass}>
+                <img src={img} alt="" className="w-full h-full object-cover rounded-lg shadow-md" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {canScrollPrev && (
+        <button
+          onClick={() => emblaApi?.scrollPrev()}
+          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-lg hover:bg-white transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+      )}
+      {canScrollNext && (
+        <button
+          onClick={() => emblaApi?.scrollNext()}
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-lg hover:bg-white transition-colors"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      )}
+    </div>
+  );
 };
 
 const LandingPage = () => {
@@ -827,6 +894,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
         aspectRatio: string;
         title?: string;
         backgroundColor?: string;
+        layout?: string;
       };
 
       const aspectClass: Record<string, string> = {
@@ -837,6 +905,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       };
 
       const columns = settings.columns || 3;
+      const isSlider = settings.layout === 'slider' || (settings.images || []).length > 4;
       
       return (
         <section className="py-8 px-4" style={{ backgroundColor: settings.backgroundColor }}>
@@ -844,20 +913,24 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
             {settings.title && (
               <h2 className="text-2xl font-bold text-center mb-6">{settings.title}</h2>
             )}
-            <div
-              className={`grid gap-4 ${
-                columns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
-                columns === 3 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' :
-                columns === 4 ? 'grid-cols-2 md:grid-cols-4' :
-                'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
-              }`}
-            >
-              {(settings.images || []).map((img, idx) => (
-                <div key={idx} className={aspectClass[settings.aspectRatio] || "aspect-square"}>
-                  <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
-                </div>
-              ))}
-            </div>
+            {isSlider ? (
+              <ImageGallerySlider images={settings.images || []} aspectRatio={settings.aspectRatio} />
+            ) : (
+              <div
+                className={`grid gap-4 ${
+                  columns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+                  columns === 3 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' :
+                  columns === 4 ? 'grid-cols-2 md:grid-cols-4' :
+                  'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+                }`}
+              >
+                {(settings.images || []).map((img, idx) => (
+                  <div key={idx} className={aspectClass[settings.aspectRatio] || "aspect-square"}>
+                    <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       );
