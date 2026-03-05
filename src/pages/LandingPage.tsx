@@ -350,7 +350,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
     // Use pack price if selected, otherwise variant-based
     const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
     const subtotal = packOption 
-      ? (packOption.id === 'combo' ? packOption.price : packOption.price * (totalQuantity || 1))
+      ? packOption.price * (totalQuantity || 1)
       : selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
     const total = subtotal + shippingCost;
 
@@ -377,7 +377,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
           shippingZone,
           orderSource: 'landing_page',
           notes: `LP:${slug}${packOption ? ` | Pack: ${packOption.label}` : ''}`,
-          packPriceOverride: packOption?.id === 'combo' ? packOption.price : null,
+          packPriceOverride: packOption ? packOption.price * (totalQuantity || 1) : null,
         },
       });
 
@@ -681,7 +681,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       // Otherwise use variant-based pricing
       const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
       const subtotal = selectedPackOption 
-        ? (selectedPackOption.id === 'combo' ? selectedPackOption.price : selectedPackOption.price * (totalQuantity || 1))
+        ? selectedPackOption.price * (totalQuantity || 1)
         : selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
       const shippingCost = settings.freeDelivery ? 0 : SHIPPING_RATES[shippingZone];
       const total = subtotal + shippingCost;
@@ -754,18 +754,8 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
                 {products.map((product) => (
                   <div key={product.id} className="bg-white rounded-2xl border shadow-sm overflow-hidden mb-4">
                     {/* Product header */}
-                    <div className="flex items-center gap-3 p-4 border-b bg-gray-50/50">
-                      {product.images?.[0] && (
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-bold text-base">{product.name}</p>
-                        <p className="font-bold" style={{ color: settings.accentColor || '#ef4444' }}>
-                          ৳ {product.price.toLocaleString()}
-                        </p>
-                      </div>
+                    <div className="p-4 border-b bg-gray-50/50">
+                      <p className="font-semibold text-base text-gray-700">কালার ও সাইজ সিলেক্ট করুন</p>
                     </div>
 
                     {/* Variation rows */}
