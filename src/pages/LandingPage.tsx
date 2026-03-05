@@ -377,6 +377,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
           shippingZone,
           orderSource: 'landing_page',
           notes: `LP:${slug}${packOption ? ` | Pack: ${packOption.label}` : ''}`,
+          packPriceOverride: packOption ? packOption.price : null,
         },
       });
 

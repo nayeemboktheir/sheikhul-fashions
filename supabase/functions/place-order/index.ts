@@ -25,6 +25,7 @@ type PlaceOrderBody = {
   invoiceNote?: string | null;
   steadfastNote?: string | null;
   orderSource?: 'web' | 'manual' | 'landing_page';
+  packPriceOverride?: number | null;
 };
 
 function normalizeBdPhoneLocal(phone: string) {
@@ -485,7 +486,10 @@ Deno.serve(async (req) => {
       }>),
     ];
 
-    const subtotal = itemsFinal.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    // Use pack price override if provided (for combo/pack orders from landing pages)
+    const calculatedSubtotal = itemsFinal.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const packOverride = typeof body.packPriceOverride === 'number' && body.packPriceOverride > 0 ? body.packPriceOverride : null;
+    const subtotal = packOverride ?? calculatedSubtotal;
     
     // Shipping cost based on zone: Inside Dhaka = 80 TK, Outside Dhaka = 130 TK
     const shippingZone = body.shippingZone || 'outside_dhaka';
