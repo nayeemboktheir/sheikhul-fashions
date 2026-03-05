@@ -348,11 +348,11 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
     const shippingCost = isFreeDelivery ? 0 : SHIPPING_RATES[shippingZone];
     
     // Use pack price if selected, otherwise variant-based
+    const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
     const subtotal = packOption 
-      ? packOption.price 
+      ? (packOption.id === 'combo' ? packOption.price : packOption.price * (totalQuantity || 1))
       : selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
     const total = subtotal + shippingCost;
-    const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
 
     // Always use variant details for order items
     const orderItems = selectedItems.length > 0 
@@ -377,7 +377,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
           shippingZone,
           orderSource: 'landing_page',
           notes: `LP:${slug}${packOption ? ` | Pack: ${packOption.label}` : ''}`,
-          packPriceOverride: packOption ? packOption.price : null,
+          packPriceOverride: packOption?.id === 'combo' ? packOption.price : null,
         },
       });
 
@@ -679,12 +679,12 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       // If pack option is selected AND variants are selected, use pack price
       // If pack option selected but no variants yet, use pack price  
       // Otherwise use variant-based pricing
+      const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
       const subtotal = selectedPackOption 
-        ? selectedPackOption.price 
+        ? (selectedPackOption.id === 'combo' ? selectedPackOption.price : selectedPackOption.price * (totalQuantity || 1))
         : selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
       const shippingCost = settings.freeDelivery ? 0 : SHIPPING_RATES[shippingZone];
       const total = subtotal + shippingCost;
-      const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
       const hasSelections = hasPackOptions ? (!!selectedPack && (selectedItems.length > 0 || !selectedPackOption)) : selectedItems.length > 0;
 
       // Default size options
