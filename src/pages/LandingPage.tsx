@@ -382,6 +382,11 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       });
 
       if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        setIsSubmitting(false);
+        return;
+      }
       if (!data?.orderId) throw new Error('Order was not created');
 
       navigate('/order-confirmation', {
