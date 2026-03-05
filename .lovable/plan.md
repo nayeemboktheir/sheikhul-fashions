@@ -1,20 +1,34 @@
-## Fix: Remove "পাজামা" from checkout form pack options & align data
+
+
+## Fix: Pack price calculation ignores quantity
 
 ### Problem
+When "শুধু জুব্বা" (single, ৳1,700) is selected and user picks Red × 2, the subtotal shows ৳1,700 instead of ৳3,400. The code uses `packOption.price` as a flat override regardless of quantity.
 
-The `checkout-form` section (`checkout-1`) in the database still has outdated packOptions:
+The logic should be:
+- **Single pack**: price per item × quantity (e.g., 1700 × 2 = 3400)
+- **Combo pack**: fixed bundle price (e.g., 2000 for any 2 jubbas)
 
-- "কম্বো প্যাক (জুব্বা + পাজামা)" with description "জুব্বা ও পাজামা একসাথে - সেরা ডিল!"
+### Fix (2 files)
 
-The `hero-product` section was already fixed, but the checkout form section was missed.
+**1. `src/pages/LandingPage.tsx`** — Update subtotal calculation in both the display logic (~line 682) and the submit handler (~line 351):
 
-### Fix (1 step)
+```typescript
+// For combo pack: use fixed pack price
+// For single/other packs: use per-item pack price × total quantity
+// No pack: use variant-based pricing
+const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+const subtotal = selectedPackOption
+  ? (selectedPackOption.id === 'combo' 
+      ? selectedPackOption.price 
+      : selectedPackOption.price * (totalQuantity || 1))
+  : selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
+```
 
-**Update checkout-form packOptions via SQL migration:**
+Also update `packPriceOverride` in the submit handler to only send override for combo:
+```typescript
+packPriceOverride: packOption?.id === 'combo' ? packOption.price : null,
+```
 
-- Change `checkout-1` section's packOptions to match the hero section:
-  - Single: `label: "শুধু জুব্বা"`, `description: "প্রিমিয়াম জুব্বা"`, `price: 1700`
-  - Combo: `label: "কম্বো প্যাক"`, `description: "প্রিমিয়াম Islamic Combo Pack"`, `price: 2000`
-- Also align the pack IDs to `single`/`combo` (currently `jubba_only`/`combo_pack`) so the state management works consistently across hero and checkout sections.
+**2. No edge function changes needed** — For single pack, no override is sent, so the backend calculates from item prices normally. For combo, the override is sent as before.
 
-No code changes needed -- this is purely a database data fix.
