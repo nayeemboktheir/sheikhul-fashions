@@ -222,6 +222,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
   const [shippingZone, setShippingZone] = useState<ShippingZone>('outside_dhaka');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [products, setProducts] = useState<ProductWithVariations[]>([]);
+  const [selectedPack, setSelectedPack] = useState<string>('');
 
   // Fetch products for checkout section
   useEffect(() => {
@@ -318,12 +319,20 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       return;
     }
 
+    const packOptions = (settings as any).packOptions as Array<{ id: string; label: string; price: number }> | undefined;
+    const hasPackOpts = packOptions && packOptions.length > 0;
+    const packOption = hasPackOpts ? packOptions?.find(p => p.id === selectedPack) : null;
+
     const selectedItems = getSelectedItems();
-    // Fallback to legacy single-select if no multi-variant selections
-    if (selectedItems.length === 0) {
+    // Fallback to legacy single-select if no multi-variant selections and no pack
+    if (selectedItems.length === 0 && !packOption) {
       const selected = getSelectedVariation();
       if (!selected) {
-        toast.error("প্রোডাক্ট সিলেক্ট করুন");
+        if (hasPackOpts) {
+          toast.error("প্যাকেজ সিলেক্ট করুন");
+        } else {
+          toast.error("প্রোডাক্ট সিলেক্ট করুন");
+        }
         return;
       }
       selectedItems.push({ ...selected, quantity: orderForm.quantity });
@@ -331,20 +340,37 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
 
     const isFreeDelivery = !!(settings as any).freeDelivery;
     const shippingCost = isFreeDelivery ? 0 : SHIPPING_RATES[shippingZone];
-    const subtotal = selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
+    
+    // Use pack price if selected, otherwise variant-based
+    const subtotal = packOption 
+      ? packOption.price 
+      : selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
     const total = subtotal + shippingCost;
     const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    // For pack orders with no variant selections, create a custom item
+    const orderItems = selectedItems.length > 0 
+      ? selectedItems.map(item => ({
+          productId: item.product.id,
+          variationId: item.variation.id,
+          quantity: item.quantity,
+        }))
+      : packOption 
+        ? [{
+            productId: products[0]?.id || 'pack',
+            variationId: undefined as string | undefined,
+            quantity: 1,
+            productName: packOption.label,
+            price: packOption.price,
+          }]
+        : [];
 
     setIsSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke('place-order', {
         body: {
           userId: null,
-          items: selectedItems.map(item => ({
-            productId: item.product.id,
-            variationId: item.variation.id,
-            quantity: item.quantity,
-          })),
+          items: orderItems,
           shipping: {
             name: orderForm.name,
             phone: orderForm.phone,
@@ -352,7 +378,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
           },
           shippingZone,
           orderSource: 'landing_page',
-          notes: `LP:${slug}`,
+          notes: `LP:${slug}${packOption ? ` | Pack: ${packOption.label}` : ''}`,
         },
       });
 
@@ -365,13 +391,15 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
           customerName: orderForm.name,
           phone: orderForm.phone,
           total,
-          items: selectedItems.map(item => ({
-            productId: item.product.id,
-            productName: `${item.product.name} - ${item.variation.name}`,
-            price: item.variation.price,
-            quantity: item.quantity,
-          })),
-          numItems: totalQuantity,
+          items: packOption && selectedItems.length === 0
+            ? [{ productName: packOption.label, price: packOption.price, quantity: 1 }]
+            : selectedItems.map(item => ({
+                productId: item.product.id,
+                productName: `${item.product.name} - ${item.variation.name}`,
+                price: item.variation.price,
+                quantity: item.quantity,
+              })),
+          numItems: totalQuantity || 1,
           fromLandingPage: true,
           landingPageSlug: slug,
         }
@@ -455,25 +483,46 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
               {settings.subtitle}
             </p>
           )}
-          <div
-            className="flex items-baseline gap-3"
-            style={{ justifyContent: isCenter ? "center" : "flex-start" }}
-          >
-            <span className="text-xl" style={{ color: theme.accentColor }}>
-              দাম
-            </span>
-            <span className="text-4xl font-bold" style={{ color: theme.accentColor }}>
-              {settings.price ? `${settings.price}৳` : ""}
-            </span>
-            {settings.originalPrice && (
-              <span
-                className="text-lg line-through opacity-50"
-                style={{ color: settings.textColor }}
-              >
-                {settings.originalPrice}৳
+          {/* Pack pricing or single price */}
+          {(settings as any).packOptions?.length > 0 ? (
+            <div className="space-y-3" style={{ alignItems: isCenter ? "center" : "flex-start", display: "flex", flexDirection: "column" }}>
+              {((settings as any).packOptions as Array<{ label: string; price: string; originalPrice?: string }>).map((pack, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <span className="px-3 py-1 rounded-full border-2 text-sm font-semibold" style={{ borderColor: theme.accentColor, color: theme.accentColor }}>
+                    {pack.label}
+                  </span>
+                  <span className="text-3xl md:text-4xl font-bold" style={{ color: theme.accentColor }}>
+                    {pack.price}৳
+                  </span>
+                  {pack.originalPrice && (
+                    <span className="text-lg line-through opacity-50" style={{ color: settings.textColor }}>
+                      {pack.originalPrice}৳
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="flex items-baseline gap-3"
+              style={{ justifyContent: isCenter ? "center" : "flex-start" }}
+            >
+              <span className="text-xl" style={{ color: theme.accentColor }}>
+                দাম
               </span>
-            )}
-          </div>
+              <span className="text-4xl font-bold" style={{ color: theme.accentColor }}>
+                {settings.price ? `${settings.price}৳` : ""}
+              </span>
+              {settings.originalPrice && (
+                <span
+                  className="text-lg line-through opacity-50"
+                  style={{ color: settings.textColor }}
+                >
+                  {settings.originalPrice}৳
+                </span>
+              )}
+            </div>
+          )}
           {settings.buttonText && (
             <Button
               size="lg"
@@ -623,14 +672,21 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
         freeDeliveryMessage?: string;
         freeDelivery?: boolean;
         sizeOptions?: string[];
+        packOptions?: Array<{ id: string; label: string; price: number; description?: string }>;
       };
 
       const selectedItems = getSelectedItems();
-      const subtotal = selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
+      const hasPackOptions = settings.packOptions && settings.packOptions.length > 0;
+      const selectedPackOption = hasPackOptions ? settings.packOptions?.find(p => p.id === selectedPack) : null;
+      
+      // If pack options exist, use pack price; otherwise use variant-based pricing
+      const subtotal = selectedPackOption 
+        ? selectedPackOption.price 
+        : selectedItems.reduce((sum, item) => sum + item.variation.price * item.quantity, 0);
       const shippingCost = settings.freeDelivery ? 0 : SHIPPING_RATES[shippingZone];
       const total = subtotal + shippingCost;
       const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
-      const hasSelections = selectedItems.length > 0;
+      const hasSelections = hasPackOptions ? !!selectedPack : selectedItems.length > 0;
 
       // Default size options
       const sizeOpts = settings.sizeOptions || ['S', 'M', 'L', 'XL', '2XL', '3XL'];
@@ -648,6 +704,48 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
             {settings.freeDeliveryMessage && (
               <div className="bg-green-50 border-2 border-green-400 rounded-xl p-4 mb-6 text-center">
                 <p className="text-green-700 font-bold text-lg">{settings.freeDeliveryMessage}</p>
+              </div>
+            )}
+
+            {/* Pack Selection */}
+            {hasPackOptions && settings.packOptions && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">প্যাকেজ সিলেক্ট করুন</h3>
+                <div className="grid gap-3">
+                  {settings.packOptions.map((pack) => (
+                    <button
+                      key={pack.id}
+                      type="button"
+                      onClick={() => setSelectedPack(pack.id)}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                        selectedPack === pack.id 
+                          ? 'border-green-500 bg-green-50 shadow-md' 
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            selectedPack === pack.id ? 'border-green-500' : 'border-gray-300'
+                          }`}>
+                            {selectedPack === pack.id && (
+                              <div className="w-3 h-3 rounded-full bg-green-500" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-bold text-base">{pack.label}</span>
+                            {pack.description && (
+                              <p className="text-sm text-gray-500">{pack.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-xl font-bold" style={{ color: settings.accentColor || '#ef4444' }}>
+                          ৳{pack.price.toLocaleString()}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             
@@ -807,6 +905,19 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
                 <div className="bg-gray-50 rounded-xl p-4 mt-6">
                   <h3 className="font-semibold mb-4">Your order</h3>
                   <div className="space-y-3">
+                    {/* Pack-based summary */}
+                    {selectedPackOption && selectedItems.length === 0 && (
+                      <div className="flex justify-between items-center pb-3 border-b">
+                        <div>
+                          <p className="font-medium">{selectedPackOption.label}</p>
+                          {selectedPackOption.description && (
+                            <p className="text-xs text-gray-500">{selectedPackOption.description}</p>
+                          )}
+                        </div>
+                        <span className="font-medium">৳ {selectedPackOption.price.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {/* Variant-based items */}
                     {selectedItems.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center pb-3 border-b last:border-b-0">
                         <div className="flex items-center gap-3">
@@ -829,7 +940,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
                       </div>
                     ))}
                     <div className="flex justify-between text-sm">
-                      <span>Subtotal ({totalQuantity} items)</span>
+                      <span>Subtotal</span>
                       <span>৳ {subtotal.toLocaleString()}</span>
                     </div>
                     {shippingCost > 0 && (
