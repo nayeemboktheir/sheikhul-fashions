@@ -477,7 +477,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       );
 
       const textSection = (
-        <div className={`space-y-6 ${isCenter ? "text-center" : ""}`}>
+        <div className={`space-y-6 text-center ${isCenter ? "" : "md:text-left"}`}>
           <h1 className="text-3xl md:text-5xl font-bold" style={{ color: settings.textColor }}>
             {settings.title}
           </h1>
