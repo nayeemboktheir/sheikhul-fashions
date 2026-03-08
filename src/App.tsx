@@ -69,7 +69,7 @@ const App = () => (
             <TikTokPixelTracker />
             <Routes>
               {/* Storefront Routes */}
-              <Route path="/" element={<FashionHomePage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/products" element={<StorefrontLayout><ProductsPage /></StorefrontLayout>} />
               <Route path="/products/:slug" element={<StorefrontLayout><ProductDetailPage /></StorefrontLayout>} />
               <Route path="/cart" element={<StorefrontLayout><CartPage /></StorefrontLayout>} />
