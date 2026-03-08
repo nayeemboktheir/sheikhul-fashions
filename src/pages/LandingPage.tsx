@@ -507,8 +507,8 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
             </div>
           ) : (
             <div
-              className="flex items-baseline gap-3"
-              style={{ justifyContent: isCenter ? "center" : "flex-start" }}
+              className="flex items-baseline gap-3 justify-center md:justify-start"
+              style={isCenter ? { justifyContent: "center" } : {}}
             >
               <span className="text-xl" style={{ color: theme.accentColor }}>
                 দাম
