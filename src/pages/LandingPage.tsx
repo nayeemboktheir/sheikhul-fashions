@@ -112,8 +112,9 @@ const ImageGallerySlider = ({ images, aspectRatio }: { images: string[]; aspectR
   );
 };
 
-const LandingPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+const LandingPage = ({ defaultSlug }: { defaultSlug?: string }) => {
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const slug = paramSlug || defaultSlug;
 
   const { data: page, isLoading, error } = useQuery({
     queryKey: ["landing-page", slug],
