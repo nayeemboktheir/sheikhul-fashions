@@ -488,7 +488,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
           )}
           {/* Pack pricing or single price */}
           {(settings as any).packOptions?.length > 0 ? (
-            <div className="space-y-3" style={{ alignItems: isCenter ? "center" : "flex-start", display: "flex", flexDirection: "column" }}>
+            <div className="space-y-3" style={{ alignItems: "center", display: "flex", flexDirection: "column" }}>
               {((settings as any).packOptions as Array<{ label: string; price: string; originalPrice?: string }>).map((pack, idx) => (
                 <div key={idx} className="flex items-center gap-3">
                   <span className="px-3 py-1 rounded-full border-2 text-sm font-semibold" style={{ borderColor: theme.accentColor, color: theme.accentColor }}>
