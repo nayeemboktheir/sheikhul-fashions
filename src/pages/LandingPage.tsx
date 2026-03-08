@@ -477,7 +477,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
       );
 
       const textSection = (
-        <div className={`space-y-6 ${isCenter ? "text-center" : ""}`}>
+        <div className={`space-y-6 text-center ${isCenter ? "" : "md:text-left"}`}>
           <h1 className="text-3xl md:text-5xl font-bold" style={{ color: settings.textColor }}>
             {settings.title}
           </h1>
@@ -488,7 +488,7 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
           )}
           {/* Pack pricing or single price */}
           {(settings as any).packOptions?.length > 0 ? (
-            <div className="space-y-3" style={{ alignItems: isCenter ? "center" : "flex-start", display: "flex", flexDirection: "column" }}>
+            <div className="space-y-3" style={{ alignItems: "center", display: "flex", flexDirection: "column" }}>
               {((settings as any).packOptions as Array<{ label: string; price: string; originalPrice?: string }>).map((pack, idx) => (
                 <div key={idx} className="flex items-center gap-3">
                   <span className="px-3 py-1 rounded-full border-2 text-sm font-semibold" style={{ borderColor: theme.accentColor, color: theme.accentColor }}>
@@ -507,8 +507,8 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
             </div>
           ) : (
             <div
-              className="flex items-baseline gap-3"
-              style={{ justifyContent: isCenter ? "center" : "flex-start" }}
+              className="flex items-baseline gap-3 justify-center md:justify-start"
+              style={isCenter ? { justifyContent: "center" } : {}}
             >
               <span className="text-xl" style={{ color: theme.accentColor }}>
                 দাম
@@ -546,8 +546,8 @@ const SectionRenderer = ({ section, theme, slug }: SectionRendererProps) => {
 
           {settings.badges?.length > 0 && (
             <div
-              className="flex flex-wrap gap-6 mt-8"
-              style={{ justifyContent: isCenter ? "center" : "flex-start" }}
+              className="flex flex-wrap gap-6 mt-8 justify-center md:justify-start"
+              style={isCenter ? { justifyContent: "center" } : {}}
             >
               {settings.badges.map((badge, idx) => (
                 <div key={idx} className="text-center">
