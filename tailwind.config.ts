@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Noto Sans Bengali", "Hind Siliguri", "system-ui", "sans-serif"],
-        bengali: ["Noto Sans Bengali", "Hind Siliguri", "sans-serif"],
-        display: ["Playfair Display", "Noto Sans Bengali", "serif"],
+        sans: ["Kalpurush", "Noto Sans Bengali", "Hind Siliguri", "system-ui", "sans-serif"],
+        bengali: ["Kalpurush", "Noto Sans Bengali", "Hind Siliguri", "sans-serif"],
+        display: ["Kalpurush", "Playfair Display", "Noto Sans Bengali", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
